@@ -1,4 +1,5 @@
 use rand::Rng;
+use colored::*;
 
 struct Roll {
     amount: i32,
@@ -17,6 +18,10 @@ impl Roll {
                         match character {
                             &'d' => {
                                 roll.amount = scanner.extract();
+                                if roll.amount < 0 {
+                                    println!("Error: Negative number of dice");
+                                    roll.amount = 0;
+                                }
                             }
                             &'\n' => {
                                 if sign.is_some() {
@@ -48,8 +53,12 @@ impl Roll {
         let mut sum = 0;
         for _i in 0..self.amount {
             let die = rng.gen_range(1..self.sides+1);
-            print!(" |{}| ",die);
+            let dice_str = format!(" {} ", die);
+            print!(" {} ", dice_str.bold().on_red());
             sum += die;
+        }
+        if self.modif != 0 {
+            print!("{}", format!("{:+}",self.modif).bold().blue());
         }
         sum + self.modif
     }
