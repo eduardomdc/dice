@@ -1,7 +1,9 @@
+use rand::Rng;
+
 struct Roll {
-    amount: u32,
-    sides: u32,
-    modif: u32,
+    amount: i32,
+    sides: i32,
+    modif: i32,
 }
 
 impl Roll {
@@ -14,25 +16,21 @@ impl Roll {
                     if !character.is_numeric() {
                         match character {
                             &'d' => {
-                                println!("Roll!");
                                 roll.amount = scanner.extract();
-                                println!("amount {}", roll.amount);
                             }
                             &'\n' => {
-                                println!("Enter");
                                 if sign.is_some() {
                                     roll.modif = scanner.extract();
-                                    println!("roll modfi {}", roll.modif);
+                                    if sign == Some('-') {
+                                        roll.modif = -roll.modif;
+                                    }
                                 } else {
                                     roll.sides = scanner.extract();
-                                    println!("roll sides {}", roll.sides);
                                 }
                             }
                             &'+'|&'-' => {
-                                println!("+ or -");
                                 sign = Some(*character);
                                 roll.sides = scanner.extract();
-                                println!("roll sides {}", roll.sides);
                             }
                             _ => (),
                         }
@@ -42,6 +40,18 @@ impl Roll {
             }
         }
         roll
+    }
+
+    fn throw(&self) -> i32 {
+        println!("Rolling!");
+        let mut rng = rand::thread_rng();
+        let mut sum = 0;
+        for _i in 0..self.amount {
+            let die = rng.gen_range(1..self.sides+1);
+            print!(" |{}| ",die);
+            sum += die;
+        }
+        sum + self.modif
     }
 }
 
@@ -77,7 +87,7 @@ impl Scanner {
     // returns number up to current cursor position 
     // and removes it from characters vector
     // returns 0 on error
-    fn extract(&mut self) -> u32 {
+    fn extract(&mut self) -> i32 {
         let num_str: String = self.characters[0..self.cursor-1].iter().collect();
         self.characters = self.characters[self.cursor..].to_vec();
         self.cursor = 0;
@@ -94,4 +104,5 @@ fn main() {
     let mut scanner = Scanner::new(&input);
     
     let roll = Roll::parse(&mut scanner);
+    println!("\n= {}", roll.throw());
 }
