@@ -1,6 +1,8 @@
 use rand::Rng;
+use std::env;
 use colored::*;
 
+#[derive(Debug)]
 struct Roll {
     amount: i32,
     sides: i32,
@@ -11,9 +13,9 @@ impl Roll {
     fn parse(scanner: &mut Scanner) -> Self {
         let mut roll: Roll = Roll {amount: 0, sides: 0, modif: 0};
         let mut sign: Option<char> = None;
-        while scanner.peek().is_some(){
+        loop {
             match scanner.pop() {
-                Some(character) =>{
+                Some(character) => {
                     if !character.is_numeric() {
                         match character {
                             &'d' => {
@@ -41,7 +43,17 @@ impl Roll {
                         }
                     }
                 }
-                None => println!("end of input"),
+                None => {
+                    if sign.is_some() {
+                    roll.modif = scanner.extract();
+                        if sign == Some('-') {
+                            roll.modif = -roll.modif;
+                        }
+                    } else {
+                        roll.sides = scanner.extract();
+                    }
+                    break;
+                }
             }
         }
         roll
@@ -97,7 +109,16 @@ impl Scanner {
     // and removes it from characters vector
     // returns 0 on error
     fn extract(&mut self) -> i32 {
-        let num_str: String = self.characters[0..self.cursor-1].iter().collect();
+        let num_str : String;
+        if self.peek().is_none() {
+            num_str = self.characters[0..self.cursor].iter().collect();
+        } else {
+            if self.cursor-1 != 0 {
+                num_str = self.characters[0..self.cursor-1].iter().collect();
+            } else {
+                return 0;
+            }
+        }
         self.characters = self.characters[self.cursor..].to_vec();
         self.cursor = 0;
         num_str.parse().unwrap_or(0)
@@ -106,11 +127,8 @@ impl Scanner {
 }
 
 fn main() {
-    let reader = std::io::stdin();
-    
-    let mut input = String::new();
-    reader.read_line(&mut input).unwrap();
-    let mut scanner = Scanner::new(&input);
+    let args: Vec<String> = env::args().collect();
+    let mut scanner = Scanner::new(&args[1]);
     
     let roll = Roll::parse(&mut scanner);
     println!("\n= {}", roll.throw());
